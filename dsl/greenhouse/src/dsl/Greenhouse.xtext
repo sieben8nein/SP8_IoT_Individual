@@ -1,0 +1,132 @@
+grammar dsl.Greenhouse with org.eclipse.xtext.common.Terminals
+
+generate greenhouse "http://www.Greenhouse.dsl"
+
+
+Model:
+    "system" name=ID
+    hardwareSetup+=HardwareSetup?
+    greenhouses+=Greenhouse*
+;
+
+HardwareSetup:
+	{HardwareSetup} 'hardware' 'types'
+	hardware+=Hardware*
+	'micro-controllers'
+	controllers+=Controller+
+;
+
+Hardware:
+	SettingActuator | SettingSensor
+;
+
+
+SettingActuator:
+	'actuator' name=ID 'has' 'action' settingAction+=SettingAction (',' settingAction+=SettingAction)*
+;
+
+SettingSensor:
+	'sensor' name=ID 'publishes' reducer=Reducer? frequency=Frequency
+;
+
+Controller:
+	'controller' name=ID 'of' 'type' type=ControllerType 'and' heartBeat=Heartbeat
+;
+
+Heartbeat:
+	'sends' 'heartbeat' freq=Frequency
+;
+
+ControllerType:
+	name=('ESP32' | 'ESP8266')	
+;
+
+Reducer:
+	name=('average' | 'median')
+;
+
+Frequency:
+	freq=Exp 'times' 'per' unit=('second' | 'minute' | 'hour' | 'day' | 'week')
+;
+
+
+
+SettingAction:
+	name=ID
+;
+
+
+Greenhouse:
+    'greenhouse' name=ID
+    row+=Row* elements+=GreenhouseElement*
+;
+
+Row:
+    'row' name=ID 'includes' 
+    elements+=RowElement*
+;
+
+GreenhouseElement:
+     GreenhouseSensor |  GreenhouseActuator |  GreenhouseRuleSet
+;
+
+RowElement:
+     RowSensor |  RowActuator | RowRuleSet
+;
+
+
+GreenhouseActuator:
+      'global' type=[SettingActuator] name=ID 'on' 'controller' controller=[Controller] ('will' action+=Action)? (',' 'will' action+=Action)* 
+      'and' 'has' 'safe' 'state' safeState=[SettingAction]
+;
+
+RowActuator:
+     type=[SettingActuator] name=ID 'on' 'controller' controller=[Controller] ('will' action+=Action)? (',' 'will' action+=Action)* 
+     'and' 'has' 'safe' 'state' safeState=[SettingAction]
+;
+
+GreenhouseSensor:
+     'global' type=[SettingSensor] name=ID 'on' 'controller' controller=[Controller] 'has' variable=Variable 'and' 'states'
+        states+=State(',' states+=State)*
+;
+
+RowSensor:
+    type=[SettingSensor] name=ID 'on' 'controller' controller=[Controller] 'has' variable=Variable 'and' 'states'
+        states+=State(',' states+=State)*
+;
+
+State:
+    name=ID 'when' variable=[Variable] op = ('<' | '>' | '=') threshold=Exp
+;
+
+Variable:
+    'variable' name=ID
+;
+
+Action:
+    value=[SettingAction] 'when' 'receiving' trigger=Trigger
+;
+
+Trigger:
+    {Trigger} name=ID 
+;
+
+RowRuleSet:
+	'rule' 'on' Actuator=[RowActuator] 'trigger' trigger=[Trigger] 'when' sensor=[RowSensor] 'is' state=[State]
+;
+
+GreenhouseRuleSet:
+    'global' 'rule' 'on' actuator=[GreenhouseActuator] 'trigger' trigger=[Trigger] 'when' sensor=[GreenhouseSensor] 'is' state=[State]
+;
+
+Exp returns Expression:
+	Factor (( {Plus.left=current} '+' | {Minus.left=current}  '-' ) right=Factor)*
+;
+
+Factor returns Expression:
+	Primary (({Mult.left=current} '*' | {Div.left=current}  '/'  ) right=Primary)*
+;
+
+Primary returns Expression:
+	{MathNumber} value=INT | '(' Exp ')'
+;

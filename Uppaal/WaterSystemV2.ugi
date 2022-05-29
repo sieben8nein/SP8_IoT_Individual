@@ -1,0 +1,300 @@
+process Temperature graphinfo {
+location L0 (0,0);
+trans L0 L0 1 (93,-51);
+trans L0 L0 1 (93,59);
+guard L0 L0 1 (59,-68);
+assign L0 L0 1 (59,59);
+trans L0 L0 2 (-102,-59);
+trans L0 L0 2 (-102,59);
+guard L0 L0 2 (-127,-76);
+assign L0 L0 2 (-136,59);
+}
+process Fan graphinfo {
+location Active (-127,-8);
+locationName Active(-17,-34);
+location NotActive (35,-8);
+locationName NotActive(-17,-34);
+trans Active Active 1 (-127,17);
+trans Active Active 1 (-136,-34);
+guard Active Active 1 (-109,-26);
+assign Active Active 1 (-145,16);
+trans NotActive Active 1 (-4,34);
+sync NotActive Active 1 (-30,42);
+trans Active NotActive 1 (-4,-34);
+sync Active NotActive 1 (-39,-60);
+}
+process CO2Sensor graphinfo {
+location Optimal (-467,-178);
+locationName Optimal(-26,-34);
+location NeedO2 (-289,-178);
+locationName NeedO2(-25,-34);
+invariant NeedO2(26,-9);
+location NeedCO2 (-629,-178);
+locationName NeedCO2(-42,-34);
+invariant NeedCO2(-102,-9);
+trans NeedCO2 Optimal 1 (-4,51);
+sync NeedCO2 Optimal 1 (-47,76);
+assign NeedCO2 Optimal 1 (-72,59);
+trans Optimal NeedCO2 1 (-4,-51);
+guard Optimal NeedCO2 1 (-55,-111);
+sync Optimal NeedCO2 1 (-72,-94);
+assign Optimal NeedCO2 1 (-81,-77);
+trans NeedO2 Optimal 1 (4,51);
+sync NeedO2 Optimal 1 (-38,76);
+assign NeedO2 Optimal 1 (-38,59);
+trans Optimal NeedO2 1 (4,-43);
+guard Optimal NeedO2 1 (-47,-111);
+sync Optimal NeedO2 1 (-47,-94);
+assign Optimal NeedO2 1 (-47,-77);
+}
+process CO2Vaporizer graphinfo {
+location Stop (-136,0);
+locationName Stop(-17,-34);
+location Start (93,0);
+locationName Start(-17,-34);
+invariant Start(-59,34);
+trans Start Start 1 (136,-68);
+trans Start Start 1 (136,68);
+guard Start Start 1 (153,-34);
+assign Start Start 1 (153,-17);
+trans Start Stop 1 (-4,59);
+sync Start Stop 1 (-55,68);
+assign Start Stop 1 (-89,85);
+trans Stop Start 1 (-4,-51);
+sync Stop Start 1 (-115,-119);
+assign Stop Start 1 (-115,-102);
+}
+process CO2Env graphinfo {
+location CO2Env (-170,25);
+locationName CO2Env(-51,-42);
+trans CO2Env CO2Env 1 (-85,-33);
+trans CO2Env CO2Env 1 (-85,43);
+guard CO2Env CO2Env 1 (-204,-17);
+assign CO2Env CO2Env 1 (-204,0);
+trans CO2Env CO2Env 2 (77,34);
+trans CO2Env CO2Env 2 (26,77);
+guard CO2Env CO2Env 2 (60,60);
+assign CO2Env CO2Env 2 (60,77);
+trans CO2Env CO2Env 3 (34,-67);
+trans CO2Env CO2Env 3 (94,-25);
+guard CO2Env CO2Env 3 (85,-118);
+assign CO2Env CO2Env 3 (85,-101);
+}
+process WindowOpener graphinfo {
+location Closed (-160,-8);
+locationName Closed(-35,-34);
+location Open (93,-8);
+locationName Open(-17,-43);
+invariant Open(-59,33);
+trans Closed Open 1 (-18,-85);
+sync Closed Open 1 (-109,-59);
+assign Closed Open 1 (-128,-119);
+trans Open Open 1 (128,-43);
+trans Open Open 1 (128,50);
+guard Open Open 1 (145,-34);
+assign Open Open 1 (145,-17);
+trans Open Closed 1 (-9,59);
+sync Open Closed 1 (-77,67);
+assign Open Closed 1 (-77,84);
+}
+process Aircondition graphinfo {
+location CoolingActive (-315,-25);
+locationName CoolingActive(-17,-34);
+invariant CoolingActive(-25,17);
+location NotActive (-153,-25);
+locationName NotActive(-17,-34);
+location HeatingActive (41,-25);
+locationName HeatingActive(-34,-43);
+invariant HeatingActive(-16,17);
+trans HeatingActive NotActive 1 (5,-34);
+sync HeatingActive NotActive 1 (-63,-60);
+trans NotActive HeatingActive 1 (5,42);
+sync NotActive HeatingActive 1 (-63,42);
+assign NotActive HeatingActive 1 (-79,21);
+trans HeatingActive HeatingActive 1 (119,-43);
+trans HeatingActive HeatingActive 1 (119,50);
+guard HeatingActive HeatingActive 1 (77,-17);
+assign HeatingActive HeatingActive 1 (85,50);
+trans CoolingActive CoolingActive 1 (-127,17);
+trans CoolingActive CoolingActive 1 (-136,-34);
+guard CoolingActive CoolingActive 1 (-128,-17);
+assign CoolingActive CoolingActive 1 (-136,33);
+trans NotActive CoolingActive 1 (-4,34);
+sync NotActive CoolingActive 1 (-46,25);
+assign NotActive CoolingActive 1 (14,17);
+trans CoolingActive NotActive 1 (-4,-34);
+sync CoolingActive NotActive 1 (-47,-51);
+}
+process TempSensor graphinfo {
+location Hot (-238,-331);
+locationName Hot(-8,-34);
+location Optimal (-157,-72);
+locationName Optimal(-4,-47);
+invariant Optimal(21,-4);
+location Cold (-178,187);
+locationName Cold(-13,12);
+invariant Cold(8,17);
+location Warm (-476,-212);
+locationName Warm(-26,-34);
+location Chilled (-467,85);
+locationName Chilled(-25,-43);
+invariant Chilled(-34,17);
+location AirconditionHigh (-68,-314);
+locationName AirconditionHigh(-10,-34);
+invariant AirconditionHigh(-10,17);
+location AirconditionLow (-501,-68);
+locationName AirconditionLow(-119,-34);
+invariant AirconditionLow(-10,17);
+location Fan (-374,-314);
+locationName Fan(-26,-34);
+invariant Fan(-10,17);
+trans AirconditionLow Optimal 1 (-79,2);
+guard AirconditionLow Optimal 1 (-70,-40);
+sync AirconditionLow Optimal 1 (-121,2);
+assign AirconditionLow Optimal 1 (-113,-23);
+trans Fan Optimal 1 (61,74);
+guard Fan Optimal 1 (-75,-79);
+sync Fan Optimal 1 (-91,-40);
+assign Fan Optimal 1 (-66,-28);
+guard Hot Fan 1 (-68,-26);
+sync Hot Fan 1 (-34,-1);
+guard Warm Fan 1 (-59,-26);
+sync Warm Fan 1 (-42,0);
+guard Warm AirconditionLow 1 (-47,-21);
+sync Warm AirconditionLow 1 (-47,-4);
+trans AirconditionHigh Optimal 1 (27,-70);
+trans AirconditionHigh Optimal 1 (19,-53);
+guard AirconditionHigh Optimal 1 (-24,-79);
+sync AirconditionHigh Optimal 1 (10,-28);
+assign AirconditionHigh Optimal 1 (10,-11);
+guard Hot AirconditionHigh 1 (-67,-34);
+sync Hot AirconditionHigh 1 (-67,-17);
+trans Chilled Optimal 1 (-87,28);
+guard Chilled Optimal 1 (-96,-31);
+sync Chilled Optimal 1 (-164,2);
+assign Chilled Optimal 1 (-164,11);
+trans Optimal Chilled 1 (-53,87);
+guard Optimal Chilled 1 (-36,53);
+sync Optimal Chilled 1 (-104,87);
+assign Optimal Chilled 1 (-70,104);
+trans Optimal Warm 1 (44,15);
+guard Optimal Warm 1 (-75,-45);
+assign Optimal Warm 1 (-24,-11);
+trans Optimal Cold 1 (-49,-18);
+guard Optimal Cold 1 (-96,-32);
+sync Optimal Cold 1 (-96,-15);
+assign Optimal Cold 1 (-54,-6);
+trans Cold Optimal 1 (48,-6);
+guard Cold Optimal 1 (40,2);
+sync Cold Optimal 1 (19,45);
+assign Cold Optimal 1 (19,62);
+trans Optimal Hot 1 (19,65);
+guard Optimal Hot 1 (-15,-11);
+assign Optimal Hot 1 (-24,6);
+}
+process MoistureSensor graphinfo {
+location NeedWater (-187,-102);
+locationName NeedWater(-42,-34);
+invariant NeedWater(-119,-8);
+location NotNeedWater (-17,-94);
+locationName NotNeedWater(-42,-42);
+invariant NotNeedWater(-25,18);
+trans NotNeedWater NeedWater 1 (0,56);
+guard NotNeedWater NeedWater 1 (-34,56);
+sync NotNeedWater NeedWater 1 (-34,73);
+assign NotNeedWater NeedWater 1 (-34,90);
+trans NeedWater NotNeedWater 1 (0,-46);
+guard NeedWater NotNeedWater 1 (-42,-106);
+sync NeedWater NotNeedWater 1 (-42,-89);
+assign NeedWater NotNeedWater 1 (-42,-72);
+}
+process Pump graphinfo {
+location Active (-238,-68);
+locationName Active(-17,-34);
+invariant Active(-25,17);
+location NotActive (-76,-68);
+locationName NotActive(-17,-34);
+trans Active Active 1 (-144,17);
+trans Active Active 1 (-144,-34);
+guard Active Active 1 (-221,-17);
+assign Active Active 1 (-221,0);
+trans NotActive Active 1 (4,26);
+sync NotActive Active 1 (-38,34);
+assign NotActive Active 1 (-38,51);
+trans Active NotActive 1 (-4,-34);
+sync Active NotActive 1 (-38,-76);
+assign Active NotActive 1 (-38,-59);
+}
+process Moisture graphinfo {
+location L0 (0,0);
+trans L0 L0 1 (93,-51);
+trans L0 L0 1 (93,59);
+guard L0 L0 1 (102,-17);
+assign L0 L0 1 (102,0);
+}
+process HumiditySensor graphinfo {
+location Dihumidify (-858,-161);
+locationName Dihumidify(-17,-43);
+location Stop (-629,-161);
+locationName Stop(-25,-43);
+location NeedHumidity (-374,-161);
+locationName NeedHumidity(-51,-51);
+trans NeedHumidity Stop 1 (8,59);
+trans NeedHumidity Stop 1 (8,59);
+guard NeedHumidity Stop 1 (-68,76);
+sync NeedHumidity Stop 1 (25,51);
+trans Stop NeedHumidity 1 (-17,-68);
+guard Stop NeedHumidity 1 (-51,-119);
+sync Stop NeedHumidity 1 (-43,-94);
+trans Stop Dihumidify 1 (29,68);
+guard Stop Dihumidify 1 (-22,93);
+sync Stop Dihumidify 1 (-13,68);
+trans Dihumidify Stop 1 (20,-56);
+guard Dihumidify Stop 1 (-81,-102);
+sync Dihumidify Stop 1 (-39,-77);
+}
+process Humidifier graphinfo {
+location Stopped (-782,-144);
+locationName Stopped(-10,-34);
+location Started (-501,-144);
+locationName Started(-10,-34);
+trans Started Started 1 (76,-43);
+trans Started Started 1 (68,68);
+guard Started Started 1 (25,-9);
+assign Started Started 1 (102,-17);
+trans Started Stopped 1 (55,51);
+trans Started Stopped 1 (55,51);
+sync Started Stopped 1 (-30,59);
+assign Started Stopped 1 (-56,76);
+trans Stopped Started 1 (38,-51);
+sync Stopped Started 1 (-56,-111);
+assign Stopped Started 1 (-73,-85);
+}
+process Dihumidifier graphinfo {
+location Stopped (-391,-68);
+locationName Stopped(-77,-34);
+location Started (-76,-76);
+locationName Started(-26,-42);
+trans Started Started 1 (93,-60);
+trans Started Started 1 (102,42);
+guard Started Started 1 (110,-68);
+assign Started Started 1 (118,-26);
+trans Started Stopped 1 (-22,64);
+sync Started Stopped 1 (-73,72);
+assign Started Stopped 1 (-90,89);
+trans Stopped Started 1 (-39,-55);
+sync Stopped Started 1 (-73,-106);
+assign Stopped Started 1 (-90,-81);
+}
+process Humid graphinfo {
+location L0 (-382,-127);
+trans L0 L0 1 (68,-60);
+trans L0 L0 1 (85,34);
+trans L0 L0 1 (85,34);
+guard L0 L0 1 (93,-26);
+assign L0 L0 1 (59,42);
+trans L0 L0 2 (-102,-51);
+trans L0 L0 2 (-94,59);
+guard L0 L0 2 (-153,-17);
+assign L0 L0 2 (-204,59);
+}

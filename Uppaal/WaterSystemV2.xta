@@ -1,0 +1,285 @@
+// Place global declarations here.
+clock MT;
+clock TT;
+clock BTT;
+clock CO2T;
+clock CO2HealthTimer;
+clock CVTimer;
+clock WOTimer;
+clock DHT;
+clock HT;
+clock HTT;
+clock MHealthTimer;
+bool needWater;
+bool pumpRunning;
+bool windowOpen:= false;
+bool humidifierWorking;
+bool dihumidifierWorking;
+int moist:= 100;
+int temp := 25;
+int openPercentage := 0;
+int vaporizePercentage :=0;
+int co2 := 1100;
+int humidity:=60;
+chan startPump, stopPump, notSaturated, saturated, TooSaturated;
+chan fanNeeded, fanStop;
+chan startHumidifier,stophumidifier,startDihumidifier,stoppedDihumidifier;
+chan startAircondition, stopAircondition, stopAirconditionHeating, startAirconditionHeating, co2Optimal, co2NotOptimal, o2Optimal, o2NotOptimal;
+
+process Temperature() {
+
+state
+    L0;
+init
+    L0;
+trans
+    L0 -> L0 { guard TT >= 10 && temp <35; assign temp:= temp + 2,
+TT :=0; },
+    L0 -> L0 { guard TT >= 10 && temp > -5; assign temp:= temp - 2,
+TT :=0; };
+}
+
+process Fan() {
+clock FT;
+state
+    Active,
+    NotActive;
+init
+    NotActive;
+trans
+    Active -> Active { guard FT > 10; assign temp:=temp-1,
+FT:=0; },
+    NotActive -> Active { sync fanNeeded?; },
+    Active -> NotActive { sync fanStop?; };
+}
+
+process CO2Sensor() {
+
+state
+    Optimal,
+    NeedO2 { co2 >= 900 },
+    NeedCO2 { co2 <= 900 };
+init
+    Optimal;
+trans
+    NeedCO2 -> Optimal { sync co2Optimal!; assign CO2HealthTimer := 0; },
+    Optimal -> NeedCO2 { guard co2 < 800; sync co2NotOptimal!; assign CO2HealthTimer := 0; },
+    NeedO2 -> Optimal { sync o2Optimal!; assign CO2HealthTimer := 0; },
+    Optimal -> NeedO2 { guard co2 > 1000; sync o2NotOptimal!; assign CO2HealthTimer := 0; };
+}
+
+process CO2Vaporizer() {
+
+state
+    Stop,
+    Start { CVTimer <= 1000 };
+init
+    Stop;
+trans
+    Start -> Start { guard vaporizePercentage < 100 and CVTimer >=1000; assign vaporizePercentage := vaporizePercentage + 20,
+co2:=co2 + vaporizePercentage,
+CVTimer:=0; },
+    Start -> Stop { sync co2Optimal?; assign vaporizePercentage := 0; },
+    Stop -> Start { sync co2NotOptimal?; assign vaporizePercentage := vaporizePercentage + 20,
+co2 := co2 + vaporizePercentage,
+CVTimer:=0; };
+}
+
+process CO2Env() {
+int counter = 0;
+
+state
+    CO2Env;
+init
+    CO2Env;
+trans
+    CO2Env -> CO2Env { guard counter > 20; assign co2 := co2-50,
+counter := 0; },
+    CO2Env -> CO2Env { guard CO2T > 1000; assign co2 := co2 + 2,
+counter := counter + 1; },
+    CO2Env -> CO2Env { guard CO2T > 1000; assign co2 := co2 - 2,
+counter := counter +1,
+CO2T:= 0; };
+}
+
+process WindowOpener() {
+
+state
+    Closed,
+    Open { WOTimer <= 1100 };
+init
+    Closed;
+trans
+    Closed -> Open { sync o2NotOptimal?; assign openPercentage := openPercentage + 20,
+windowOpen := true,
+WOTimer :=0; },
+    Open -> Open { guard openPercentage < 100 and WOTimer >=1000; assign openPercentage := openPercentage + 20,
+co2 := co2 - openPercentage,
+WOTimer := 0; },
+    Open -> Closed { sync o2Optimal?; assign windowOpen := false,
+openPercentage := 0; };
+}
+
+process Aircondition() {
+clock AT;
+state
+    CoolingActive { AT <=11 },
+    NotActive,
+    HeatingActive { AT <=11 };
+init
+    NotActive;
+trans
+    HeatingActive -> NotActive { sync stopAirconditionHeating?; },
+    NotActive -> HeatingActive { sync startAirconditionHeating?; assign AT:=0; },
+    HeatingActive -> HeatingActive { guard AT>10; assign temp:=temp+3,
+AT:=0; },
+    CoolingActive -> CoolingActive { guard AT > 10; assign temp:=temp-3,
+AT:=0; },
+    NotActive -> CoolingActive { sync startAircondition?; assign AT:=0; },
+    CoolingActive -> NotActive { sync stopAircondition?; };
+}
+
+process TempSensor() {
+clock coldTime;
+state
+    Hot,
+    Optimal { temp > 17 && temp < 33 },
+    Cold { temp <31 },
+    Warm,
+    Chilled { temp <31 },
+    AirconditionHigh { temp > 19 },
+    AirconditionLow { temp > 19 },
+    Fan { temp > 19 };
+commit
+    Hot,
+    Warm;
+init
+    Optimal;
+trans
+    AirconditionLow -> Optimal { guard temp < 26; sync stopAircondition!; assign BTT := 0; },
+    Fan -> Optimal { guard temp < 26; sync fanStop!; assign BTT := 0; },
+    Hot -> Fan { guard windowOpen == true; sync fanNeeded!; },
+    Warm -> Fan { guard windowOpen == true; sync fanNeeded!; },
+    Warm -> AirconditionLow { guard windowOpen == false; sync startAircondition!; },
+    AirconditionHigh -> Optimal { guard temp < 26; sync stopAircondition!; assign BTT := 0; },
+    Hot -> AirconditionHigh { guard windowOpen == false; sync startAircondition!; },
+    Chilled -> Optimal { guard temp > 24; sync stopAirconditionHeating!; assign coldTime := 0; },
+    Optimal -> Chilled { guard temp < 20 &&
+temp > 15; sync startAirconditionHeating!; assign coldTime := 0; },
+    Optimal -> Warm { guard temp > 30 &&
+temp < 40; assign BTT := 0; },
+    Optimal -> Cold { guard temp < 15; sync startAirconditionHeating!; assign coldTime := 0; },
+    Cold -> Optimal { guard temp > 24; sync stopAirconditionHeating!; assign coldTime := 0; },
+    Optimal -> Hot { guard temp > 40; assign BTT := 0; };
+}
+
+process MoistureSensor() {
+
+state
+    NeedWater { moist <= 150 },
+    NotNeedWater { moist >= 100 };
+init
+    NotNeedWater;
+trans
+    NotNeedWater -> NeedWater { guard moist<=100; sync startPump!; assign MHealthTimer := 0; },
+    NeedWater -> NotNeedWater { guard moist >= 100; sync stopPump!; assign MHealthTimer := 0; };
+}
+
+process Pump() {
+clock PT;
+state
+    Active { PT <= 1000 },
+    NotActive;
+init
+    NotActive;
+trans
+    Active -> Active { guard PT >= 1000; assign PT:=0,
+moist:=moist+6; },
+    NotActive -> Active { sync startPump?; assign pumpRunning = true, PT := 0; },
+    Active -> NotActive { sync stopPump?; assign pumpRunning = false; };
+}
+
+process Moisture() {
+
+state
+    L0;
+init
+    L0;
+trans
+    L0 -> L0 { guard MT>=(30*60000) and moist >=0  and moist <= 300; assign moist:= moist - 1,
+MT :=0; };
+}
+
+process HumiditySensor() {
+
+state
+    Dihumidify,
+    Stop,
+    NeedHumidity;
+init
+    Stop;
+trans
+    NeedHumidity -> Stop { guard humidity>40 && humidity<60; sync stophumidifier!; },
+    Stop -> NeedHumidity { guard humidity<40; sync startHumidifier!; },
+    Stop -> Dihumidify { guard humidity>60; sync startDihumidifier!; },
+    Dihumidify -> Stop { guard humidity>40 && humidity <60; sync stoppedDihumidifier!; };
+}
+
+process Humidifier() {
+
+state
+    Stopped,
+    Started;
+init
+    Stopped;
+trans
+    Started -> Started { guard HT>10; assign humidity:=humidity+3,
+HT:=0; },
+    Started -> Stopped { sync stophumidifier?; assign humidifierWorking = false; },
+    Stopped -> Started { sync startHumidifier?; assign humidifierWorking = true; };
+}
+
+process Dihumidifier() {
+
+state
+    Stopped,
+    Started;
+init
+    Stopped;
+trans
+    Started -> Started { guard DHT>10; assign humidity:=humidity-3,
+HT:=0; },
+    Started -> Stopped { sync stoppedDihumidifier?; assign dihumidifierWorking = false; },
+    Stopped -> Started { sync startDihumidifier?; assign dihumidifierWorking = true; };
+}
+
+process Humid() {
+
+state
+    L0;
+init
+    L0;
+trans
+    L0 -> L0 { guard HTT>10; assign humidity:=humidity+2,
+HT:=0; },
+    L0 -> L0 { guard HTT>10; assign humidity:=humidity-2,
+DHT:=0; };
+}
+// Place template instantiations here.´
+co2Sensor:=CO2Sensor();
+co2Env:=CO2Env();
+windowOpener:=WindowOpener();
+co2Vaporizer:=CO2Vaporizer();
+moisture:=MoistureSensor();
+moistureEnv:=Moisture();
+pump:=Pump();
+fan:=Fan();
+aircondition:=Aircondition();
+tempSensor:=TempSensor();
+temperatur:=Temperature();
+humiditysensor:=HumiditySensor();
+humidifier:=Humidifier();
+dihumidifier:=Dihumidifier();
+humid:=Humid();
+// List one or more processes to be composed into a system.
+system co2Vaporizer, co2Sensor, co2Env, windowOpener, aircondition, tempSensor, temperatur, fan,moisture, moistureEnv, pump, humiditysensor,humidifier,dihumidifier,humid;

@@ -1,0 +1,921 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+
+clock check1timer;
+clock MHealthTimer;
+clock HHealthTimer;
+bool needWater;
+bool pumpRunning;
+bool windowOpen:= false;
+bool humidifierWorking;
+bool dihumidifierWorking;
+bool rule1Active, rule2Active;
+int moist:= 100;
+int temp := 25;
+int openPercentage := 0;
+int vaporizePercentage :=0;
+int co2 := 1100;
+int humidity:=60;
+bool rule1triggered := false;
+bool rule2triggered := false;
+bool rule3triggered := false;
+bool rule4triggered := false;
+bool device1error := false;
+bool device2error := false;
+bool pumpUpdated := true;
+bool humidifierUpdated := true;
+bool moistureUpdated := true;
+bool humidityUpdated := true;
+chan moistActivator;
+chan StartPump, pumpStarted, StopPump, pumpStopped, notSaturated, saturated, TooSaturated;
+chan NeedWaterNotification, NotNeedWaterNotification, Rule1Enforce, Rule1Enforced, Rule2Enforce, Rule2Enforced, Rule3Enforce, Rule3Enforced, Rule4Enforce, Rule4Enforced;
+chan NeedHumidityNotification, NotNeedHumidityNotification, NeedLessHumidityNotification, NotNeedLessHumidityNotification; 
+chan Device1Heartbeat, Device2Heartbeat, Device1Error, Device2Error;
+chan fanNeeded, fanStop;
+chan startHumidifier,stophumidifier,startDihumidifier,stoppedDihumidifier;
+chan startAircondition, stopAircondition, stopAirconditionHeating, startAirconditionHeating, co2Optimal, co2NotOptimal, o2Optimal, o2NotOptimal;</declaration>
+	<template>
+		<name>Device1</name>
+		<location id="id0" x="-119" y="0">
+			<name x="-129" y="-34">Healthy</name>
+		</location>
+		<location id="id1" x="42" y="0">
+			<name x="32" y="-34">Unhealthy</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-102" y="-17">Device1Error!</label>
+			<label kind="assignment" x="-101" y="0">device1error=true</label>
+		</transition>
+	</template>
+	<template>
+		<name>Device2</name>
+		<location id="id2" x="-119" y="0">
+			<name x="-129" y="-34">Healthy</name>
+		</location>
+		<location id="id3" x="42" y="0">
+			<name x="32" y="-34">Unhealthy</name>
+		</location>
+		<init ref="id2"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="-102" y="-17">Device2Error!</label>
+			<label kind="assignment" x="-101" y="0">device2error=true</label>
+		</transition>
+	</template>
+	<template>
+		<name>Rule1</name>
+		<location id="id4" x="153" y="-280">
+			<name x="143" y="-314">ActionHandled</name>
+			<committed/>
+		</location>
+		<location id="id5" x="153" y="-93">
+			<name x="144" y="-127">Inactive</name>
+		</location>
+		<location id="id6" x="-25" y="-280">
+			<name x="-35" y="-314">HandlingAction</name>
+			<committed/>
+		</location>
+		<location id="id7" x="-25" y="-93">
+			<name x="-35" y="-127">Triggered</name>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-8" y="68">device1error == true</label>
+			<label kind="assignment" x="-7" y="93">rule1triggered = false</label>
+			<nail x="-25" y="93"/>
+			<nail x="153" y="93"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="153" y="-204">Rule1Enforced!</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="26" y="-297">StopPump!</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-76" y="-42">pumpRunning == true and device1error == false</label>
+			<label kind="synchronisation" x="-17" y="-76">NotNeedWaterNotification?</label>
+			<label kind="assignment" x="0" y="-59">rule1triggered = true</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-25" y="-220">device1error == false</label>
+			<label kind="synchronisation" x="-59" y="-221">Rule1Enforce?</label>
+			<label kind="assignment" x="-59" y="-204">rule1triggered = false</label>
+		</transition>
+	</template>
+	<template>
+		<name>Rule2</name>
+		<location id="id8" x="-110" y="-34">
+			<name x="-120" y="-68">Triggered</name>
+		</location>
+		<location id="id9" x="68" y="-34">
+			<name x="59" y="-68">Inactive</name>
+		</location>
+		<location id="id10" x="-110" y="-221">
+			<name x="-120" y="-255">HandlingAction</name>
+			<committed/>
+		</location>
+		<location id="id11" x="68" y="-221">
+			<name x="58" y="-255">ActionHandled</name>
+			<committed/>
+		</location>
+		<init ref="id9"/>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="guard" x="-93" y="102">device1error == true</label>
+			<label kind="assignment" x="-93" y="119">rule2triggered = false</label>
+			<nail x="-110" y="93"/>
+			<nail x="68" y="93"/>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="25" y="-144">Rule2Enforced!</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="-59" y="-221">StartPump!</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-102" y="8">pumpRunning == false and device1error == false</label>
+			<label kind="synchronisation" x="-102" y="-25">NeedWaterNotification?</label>
+			<label kind="assignment" x="-102" y="-8">rule2triggered = true</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id10"/>
+			<label kind="guard" x="-170" y="-144">device1error == false</label>
+			<label kind="synchronisation" x="-170" y="-161">Rule2Enforce?</label>
+			<label kind="assignment" x="-170" y="-127">rule2triggered = false</label>
+		</transition>
+	</template>
+	<template>
+		<name>Rule3</name>
+		<location id="id12" x="-144" y="-221">
+			<name x="-154" y="-255">ActionHandled</name>
+			<committed/>
+		</location>
+		<location id="id13" x="-144" y="-34">
+			<name x="-153" y="-68">Inactive</name>
+		</location>
+		<location id="id14" x="-322" y="-221">
+			<name x="-332" y="-255">HandlingAction</name>
+			<committed/>
+		</location>
+		<location id="id15" x="-322" y="-34">
+			<name x="-332" y="-68">Triggered</name>
+		</location>
+		<init ref="id13"/>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="-187" y="-119">Rule3Enforced!</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-289" y="-221">startHumidifier!</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-306" y="8">humidifierWorking == false and device2error == false</label>
+			<label kind="synchronisation" x="-306" y="-25">NeedHumidityNotification?</label>
+			<label kind="assignment" x="-306" y="-8">rule3triggered = true</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="-356" y="-162">Rule3Enforce?</label>
+			<label kind="assignment" x="-356" y="-145">rule3triggered = false</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-305" y="94">device2error == true</label>
+			<label kind="assignment" x="-305" y="111">rule3triggered = false</label>
+			<nail x="-322" y="85"/>
+			<nail x="-144" y="85"/>
+		</transition>
+	</template>
+	<template>
+		<name>Rule4</name>
+		<location id="id16" x="59" y="-187">
+			<name x="49" y="-221">ActionHandled</name>
+			<committed/>
+		</location>
+		<location id="id17" x="59" y="0">
+			<name x="50" y="-34">Inactive</name>
+		</location>
+		<location id="id18" x="-119" y="-187">
+			<name x="-129" y="-221">HandlingAction</name>
+			<committed/>
+		</location>
+		<location id="id19" x="-119" y="0">
+			<name x="-129" y="-34">Triggered</name>
+		</location>
+		<init ref="id17"/>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="17" y="-76">Rule4Enforced!</label>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-85" y="-187">stophumidifier!</label>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-101" y="-34">humidifierWorking == true and device2error == false</label>
+			<label kind="synchronisation" x="-110" y="17">NotNeedHumidityNotification?</label>
+			<label kind="assignment" x="-102" y="34">rule4triggered = true</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="-153" y="-128">Rule4Enforce?</label>
+			<label kind="assignment" x="-153" y="-111">rule4triggered = false</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-102" y="127">device2error == true</label>
+			<label kind="assignment" x="-102" y="144">rule4triggered = false</label>
+			<nail x="-119" y="119"/>
+			<nail x="59" y="119"/>
+		</transition>
+	</template>
+	<template>
+		<name>Controller</name>
+		<declaration>
+bool rule1Disable;
+bool rule2Disable;
+int ruleCounter;
+bool ruleChecked;
+bool timerUpdated;</declaration>
+		<location id="id20" x="306" y="-901">
+			<name x="296" y="-935">Idle</name>
+			<urgent/>
+		</location>
+		<location id="id21" x="-229" y="-433">
+			<name x="-331" y="-459">HandleRule1</name>
+		</location>
+		<location id="id22" x="110" y="-433">
+			<name x="127" y="-467">HandleRule2</name>
+		</location>
+		<location id="id23" x="-229" y="-544">
+			<name x="-374" y="-569">Rule1TriggerCheck</name>
+			<committed/>
+		</location>
+		<location id="id24" x="110" y="-544">
+			<name x="127" y="-569">Rule2TriggerCheck</name>
+			<committed/>
+		</location>
+		<location id="id25" x="306" y="-1054">
+			<name x="296" y="-1088">Counter</name>
+			<label kind="invariant" x="289" y="-1028">check1timer &lt; 9</label>
+		</location>
+		<location id="id26" x="110" y="-654">
+			<name x="127" y="-671">Rule2DeviceCheck</name>
+			<committed/>
+		</location>
+		<location id="id27" x="-59" y="-654">
+			<name x="-84" y="-637">MoistureBack</name>
+			<committed/>
+		</location>
+		<location id="id28" x="-229" y="-654">
+			<name x="-365" y="-680">Rule1DeviceCheck</name>
+			<committed/>
+		</location>
+		<location id="id29" x="493" y="-433">
+			<name x="391" y="-458">HandleRule4</name>
+		</location>
+		<location id="id30" x="858" y="-433">
+			<name x="850" y="-467">HandleRule3</name>
+		</location>
+		<location id="id31" x="493" y="-544">
+			<name x="340" y="-569">Rule4TriggerCheck</name>
+			<committed/>
+		</location>
+		<location id="id32" x="858" y="-544">
+			<name x="875" y="-569">Rule3TriggerCheck</name>
+			<committed/>
+		</location>
+		<location id="id33" x="858" y="-654">
+			<name x="866" y="-688">Rule3DeviceCheck</name>
+			<committed/>
+		</location>
+		<location id="id34" x="493" y="-654">
+			<name x="340" y="-671">Rule4DeviceCheck</name>
+			<committed/>
+		</location>
+		<location id="id35" x="680" y="-654">
+			<name x="637" y="-637">HumidityBack</name>
+			<committed/>
+		</location>
+		<location id="id36" x="306" y="-782">
+			<committed/>
+		</location>
+		<init ref="id20"/>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id25"/>
+			<label kind="guard" x="324" y="-1130">timerUpdated == false and check1timer &gt;= 8</label>
+			<label kind="assignment" x="255" y="-1164">timerUpdated = true</label>
+			<nail x="382" y="-1139"/>
+			<nail x="221" y="-1139"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id33"/>
+			<label kind="guard" x="807" y="-756">(ruleCounter % 4) == 0 and 
+ruleChecked == false</label>
+			<nail x="858" y="-790"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id34"/>
+			<label kind="guard" x="450" y="-756">(ruleCounter % 4) == 2 and 
+ruleChecked == false</label>
+			<nail x="493" y="-790"/>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id36"/>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id20"/>
+			<label kind="assignment" x="255" y="-850">ruleChecked := true</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id23"/>
+			<label kind="guard" x="-382" y="-620">device1error == false</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-221" y="-680">device1error == true</label>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id36"/>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-51" y="-680">device1error == true</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id24"/>
+			<label kind="guard" x="119" y="-612">device1error == false</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id25"/>
+			<label kind="guard" x="416" y="-1011">ruleChecked == true and 
+(pumpUpdated == true or pumpRunning == false) and 
+(humidifierUpdated == true or humidifierWorking == false)  and moistureUpdated == true and humidityUpdated == true</label>
+			<label kind="assignment" x="323" y="-935">check1timer = 0,
+timerUpdated = false</label>
+			<nail x="347" y="-977"/>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id20"/>
+			<label kind="guard" x="25" y="-1045">timerUpdated == true</label>
+			<label kind="assignment" x="26" y="-1028">ruleCounter = (ruleCounter +1) %4,
+ruleChecked = false,
+pumpUpdated = false,
+humidifierUpdated = false,
+humidityUpdated = false,
+moistureUpdated = false</label>
+			<nail x="263" y="-977"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-59" y="-569">rule2triggered == false</label>
+			<nail x="-59" y="-544"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id22"/>
+			<label kind="guard" x="127" y="-510">rule2triggered == true</label>
+			<label kind="synchronisation" x="127" y="-493">Rule2Enforce!</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id26"/>
+			<label kind="guard" x="-8" y="-765">(ruleCounter % 4) == 3 and 
+ruleChecked == false</label>
+			<nail x="110" y="-782"/>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-399" y="-510">rule1triggered == true</label>
+			<label kind="synchronisation" x="-399" y="-485">Rule1Enforce!</label>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id27"/>
+			<label kind="guard" x="-221" y="-578">rule1triggered == false</label>
+			<nail x="-59" y="-544"/>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-314" y="-765">(ruleCounter % 4) == 1 and 
+ruleChecked == false</label>
+			<nail x="-229" y="-773"/>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id27"/>
+			<label kind="synchronisation" x="-195" y="-450">Rule1Enforced?</label>
+			<nail x="-59" y="-433"/>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id27"/>
+			<label kind="synchronisation" x="-34" y="-450">Rule2Enforced?</label>
+			<nail x="-59" y="-433"/>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id31"/>
+			<label kind="guard" x="340" y="-612">device2error == false</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id35"/>
+			<label kind="guard" x="501" y="-680">device2error == true</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id35"/>
+			<label kind="guard" x="680" y="-680">device2error == true</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id32"/>
+			<label kind="guard" x="867" y="-612">device2error == false</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id35"/>
+			<label kind="guard" x="688" y="-569">rule3triggered == false</label>
+			<nail x="680" y="-544"/>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id30"/>
+			<label kind="guard" x="867" y="-518">rule3triggered == true</label>
+			<label kind="synchronisation" x="867" y="-501">Rule3Enforce!</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id29"/>
+			<label kind="guard" x="323" y="-510">rule4triggered == true</label>
+			<label kind="synchronisation" x="323" y="-493">Rule4Enforce!</label>
+		</transition>
+		<transition>
+			<source ref="id31"/>
+			<target ref="id35"/>
+			<label kind="guard" x="501" y="-569">rule4triggered == false</label>
+			<nail x="680" y="-544"/>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id35"/>
+			<label kind="synchronisation" x="527" y="-450">Rule4Enforced?</label>
+			<nail x="680" y="-433"/>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id35"/>
+			<label kind="synchronisation" x="697" y="-450">Rule3Enforced?</label>
+			<nail x="680" y="-433"/>
+		</transition>
+	</template>
+	<template>
+		<name>Moisture</name>
+		<location id="id37" x="0" y="0">
+		</location>
+		<init ref="id37"/>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id37"/>
+			<label kind="guard" x="102" y="-34">moist &gt;=0  and moist &lt;= 300 and
+moistureUpdated == false</label>
+			<label kind="assignment" x="102" y="0">moist:= moist - 1,
+
+moistureUpdated = true</label>
+			<nail x="93" y="-51"/>
+			<nail x="93" y="59"/>
+		</transition>
+	</template>
+	<template>
+		<name>MoistureSensor</name>
+		<location id="id38" x="-187" y="-93">
+			<name x="-229" y="-127">NeedWater</name>
+			<label kind="invariant" x="-306" y="-101">moist &lt;= 100</label>
+		</location>
+		<location id="id39" x="-17" y="-94">
+			<name x="-59" y="-136">NotNeedWater</name>
+			<label kind="invariant" x="-42" y="-76">moist &gt;= 95</label>
+		</location>
+		<init ref="id39"/>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id38"/>
+			<label kind="guard" x="-136" y="-42">moist&lt;=99</label>
+			<label kind="synchronisation" x="-136" y="-25">NeedWaterNotification!</label>
+			<label kind="assignment" x="-136" y="-8">MHealthTimer := 0</label>
+			<nail x="-102" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id39"/>
+			<label kind="guard" x="-144" y="-204">moist &gt;= 97</label>
+			<label kind="synchronisation" x="-144" y="-187">NotNeedWaterNotification!</label>
+			<label kind="assignment" x="-144" y="-170">MHealthTimer := 0</label>
+			<nail x="-102" y="-144"/>
+		</transition>
+	</template>
+	<template>
+		<name>HumiditySensor</name>
+		<location id="id40" x="-629" y="-161">
+			<name x="-654" y="-204">Stop</name>
+			<label kind="invariant" x="-639" y="-144">humidity &gt; 35</label>
+		</location>
+		<location id="id41" x="-374" y="-161">
+			<name x="-425" y="-212">NeedHumidity</name>
+			<label kind="invariant" x="-384" y="-144">humidity &lt; 45</label>
+		</location>
+		<init ref="id40"/>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id40"/>
+			<label kind="guard" x="-569" y="-85">humidity&gt;40</label>
+			<label kind="synchronisation" x="-569" y="-102">NotNeedHumidityNotification!</label>
+			<label kind="assignment" x="-475" y="-131">HHealthTimer = 0</label>
+			<nail x="-493" y="-102"/>
+			<nail x="-493" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id41"/>
+			<label kind="guard" x="-544" y="-272">humidity&lt;40</label>
+			<label kind="synchronisation" x="-544" y="-255">NeedHumidityNotification!</label>
+			<label kind="assignment" x="-611" y="-195">HHealthTimer = 0</label>
+			<nail x="-518" y="-229"/>
+		</transition>
+	</template>
+	<template>
+		<name>Pump</name>
+		<declaration>clock PT;</declaration>
+		<location id="id42" x="-238" y="-68">
+			<name x="-255" y="-102">Active</name>
+		</location>
+		<location id="id43" x="-76" y="-68">
+			<name x="-93" y="-102">NotActive</name>
+		</location>
+		<location id="id44" x="-144" y="136">
+			<name x="-161" y="102">SafeState</name>
+		</location>
+		<init ref="id43"/>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id44"/>
+			<label kind="synchronisation" x="-339" y="25">Device1Error?</label>
+			<label kind="assignment" x="-339" y="42">pumpRunning=false</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id42"/>
+			<label kind="guard" x="-374" y="-93">pumpUpdated == false</label>
+			<label kind="assignment" x="-469" y="-68">moist:=moist+3,
+pumpUpdated = true</label>
+			<nail x="-392" y="-51"/>
+			<nail x="-392" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id42"/>
+			<label kind="synchronisation" x="-187" y="-51">StartPump?</label>
+			<label kind="assignment" x="-187" y="-34">pumpRunning = true, PT := 0</label>
+			<nail x="-153" y="-25"/>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id43"/>
+			<label kind="synchronisation" x="-204" y="-153">StopPump?</label>
+			<label kind="assignment" x="-204" y="-136">pumpRunning = false</label>
+			<nail x="-161" y="-110"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id44"/>
+			<label kind="synchronisation" x="-153" y="8">Device1Error?</label>
+			<label kind="assignment" x="-153" y="25">pumpRunning=false</label>
+		</transition>
+	</template>
+	<template>
+		<name>Humidifier</name>
+		<location id="id45" x="-688" y="-144">
+			<name x="-698" y="-178">Stopped</name>
+		</location>
+		<location id="id46" x="-501" y="-144">
+			<name x="-511" y="-178">Started</name>
+		</location>
+		<location id="id47" x="-586" y="34">
+			<name x="-603" y="0">SafeState</name>
+		</location>
+		<init ref="id45"/>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id46"/>
+			<label kind="guard" x="-399" y="-195">humidifierUpdated == false</label>
+			<label kind="assignment" x="-408" y="-170">humidity:=humidity+3,
+
+humidifierUpdated = true</label>
+			<nail x="-425" y="-187"/>
+			<nail x="-425" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="-637" y="-127">stophumidifier?</label>
+			<label kind="assignment" x="-637" y="-110">humidifierWorking = false</label>
+			<nail x="-586" y="-110"/>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id46"/>
+			<label kind="synchronisation" x="-654" y="-238">startHumidifier?</label>
+			<label kind="assignment" x="-654" y="-221">humidifierWorking = true</label>
+			<nail x="-586" y="-187"/>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id47"/>
+			<label kind="synchronisation" x="-680" y="-68">Device2Error?</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id47"/>
+			<label kind="synchronisation" x="-568" y="-72">Device2Error?</label>
+			<label kind="assignment" x="-569" y="-42">humidifierWorking = false</label>
+		</transition>
+	</template>
+	<template>
+		<name>Dihumidifier</name>
+		<location id="id48" x="-289" y="-68">
+			<name x="-366" y="-102">Stopped</name>
+		</location>
+		<location id="id49" x="-76" y="-76">
+			<name x="-102" y="-118">Started</name>
+		</location>
+		<location id="id50" x="-170" y="119">
+			<name x="-187" y="85">SafeState</name>
+		</location>
+		<init ref="id48"/>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id49"/>
+			<label kind="assignment" x="17" y="-85">humidity:=humidity-3</label>
+			<nail x="0" y="-110"/>
+			<nail x="0" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id48"/>
+			<label kind="synchronisation" x="-246" y="-42">stoppedDihumidifier?</label>
+			<label kind="assignment" x="-246" y="-25">dihumidifierWorking = false</label>
+			<nail x="-187" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id49"/>
+			<label kind="synchronisation" x="-263" y="-153">startDihumidifier?</label>
+			<label kind="assignment" x="-263" y="-136">dihumidifierWorking = true</label>
+			<nail x="-187" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="-271" y="8">Device2Error?</label>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id50"/>
+			<label kind="synchronisation" x="-153" y="25">Device2Error?</label>
+			<label kind="assignment" x="-153" y="42">dihumidifierWorking = false</label>
+		</transition>
+	</template>
+	<template>
+		<name>Humid</name>
+		<location id="id51" x="-382" y="-127">
+		</location>
+		<init ref="id51"/>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id51"/>
+			<label kind="guard" x="-586" y="-102">humidityUpdated == false and humidity &gt;=0  and humidity &lt;= 300</label>
+			<label kind="assignment" x="-586" y="-68">humidity:=humidity-1,
+humidityUpdated = true</label>
+			<nail x="-450" y="-170"/>
+			<nail x="-450" y="-85"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.´
+
+moisture:=MoistureSensor();
+moistureEnv:=Moisture();
+pump:=Pump();
+humiditysensor:=HumiditySensor();
+humidifier:=Humidifier();
+dihumidifier:=Dihumidifier();
+humid:=Humid();
+controller:=Controller();
+rule1:=Rule1();
+rule2:=Rule2();
+rule3:=Rule3();
+rule4:=Rule4();
+device1:=Device1();
+device2:=Device2();
+// List one or more processes to be composed into a system.
+//system co2Vaporizer, co2Sensor, co2Env, windowOpener, aircondition, tempSensor, temperatur, fan,moisture, moistureEnv, pump, humiditysensor,humidifier,dihumidifier,humid;
+system pump, moisture,moistureEnv, controller, rule1, rule2, rule3, rule4, device1, device2, humid, humiditysensor,humidifier; //;</system>
+	<queries>
+		<query>
+			<formula>A[] (tempSensor.AirconditionLow or tempSensor.AirconditionHigh) imply ( aircondition.CoolingActive) and temp &gt;19</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>(tempSensor.Warm &amp;&amp; windowOpen==true) or (tempSensor.Hot &amp;&amp; windowOpen==true) --&gt; tempSensor.Fan</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (tempSensor.Fan) imply fan.Active and temp &gt;19</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (tempSensor.Chilled or tempSensor.Cold) imply ( aircondition.HeatingActive) and temp &lt; 31</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; tempSensor.Chilled</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; tempSensor.Warm</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>sup{tempSensor.AirconditionLow} : BTT</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>inf{tempSensor.AirconditionLow} : BTT</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>sup{tempSensor.Chilled} : tempSensor.coldTime</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>inf{tempSensor.Chilled} : tempSensor.coldTime</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] deadlock imply (device2error == true or device1error == true)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] not deadlock imply (device2error == false and device1error == false)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>humiditysensor.Dihumidify imply (dihumidifier.Started &amp;&amp; humidity &gt; 60)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>humiditysensor.NeedHumidity imply (humidifier.Started &amp;&amp; humidity &lt; 40)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] humiditysensor.Stop imply (dihumidifier.Stopped &amp;&amp; humidifier.Stopped &amp;&amp; humidity &lt; 60 &amp;&amp; humidity &gt; 40)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>(humiditysensor.NeedHumidity &amp;&amp; humidity &lt; 60 &amp;&amp; humidity &gt; 40) --&gt; humiditysensor.Stop</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>(humiditysensor.Dihumidify &amp;&amp; humidity &lt; 60 &amp;&amp; humidity &gt; 40) --&gt; humiditysensor.Stop</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; openPercentage == 100</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; windowOpener.Idle</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; openPercentage == 20</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; co2Sensor.NeedO2 imply co2Sensor.Optimal</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; co2Sensor.NeedO2 imply windowOpener.Opening</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; co2 &lt; 2100</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (co2Sensor.NeedO2 and co2 &gt; 1000) imply windowOpener.Open</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] co2Sensor.NeedO2 imply CO2HealthTimer &lt;= 60000</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>sup{co2Sensor.NeedO2}:CO2HealthTimer</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] moisture.NotNeedWater imply MHealthTimer &gt;= 5000</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (moisture.NeedWater &amp;&amp; device1.Healthy) imply MHealthTimer &lt;=153</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; device1.Unhealthy imply pump.SafeState</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; (moisture.NeedWater and moist &lt;100) imply pump.Active</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (moisture.NotNeedWater and moist &gt;150) imply pump.NotActive</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] moist &lt; 200</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] moist &lt; 60 imply device1error == true</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A&lt;&gt; pump.Active imply moisture.NeedWater</formula>
+			<comment>Not working</comment>
+		</query>
+		<query>
+			<formula>sup{moisture.NeedWater and device1error == false } : MHealthTimer</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>sup{humiditysensor.NeedHumidity and device2.Healthy} : HHealthTimer</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

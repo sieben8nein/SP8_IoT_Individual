@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="greenhouse" nsURI="http://www.Greenhouse.dsl" nsPrefix="greenhouse">
+  <eClassifiers xsi:type="ecore:EClass" name="Model">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="hardwareSetup" upperBound="-1"
+        eType="#//HardwareSetup" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="greenhouses" upperBound="-1"
+        eType="#//Greenhouse" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="HardwareSetup">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="hardware" upperBound="-1"
+        eType="#//Hardware" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="controllers" upperBound="-1"
+        eType="#//Controller" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Hardware">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SettingActuator" eSuperTypes="#//Hardware">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="settingAction" upperBound="-1"
+        eType="#//SettingAction" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SettingSensor" eSuperTypes="#//Hardware">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="reducer" eType="#//Reducer"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="frequency" eType="#//Frequency"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Controller">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//ControllerType"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="heartBeat" eType="#//Heartbeat"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Heartbeat">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="freq" eType="#//Frequency"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ControllerType">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Reducer">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Frequency">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="freq" eType="#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="unit" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SettingAction">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Greenhouse">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="row" upperBound="-1" eType="#//Row"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements" upperBound="-1"
+        eType="#//GreenhouseElement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Row">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elements" upperBound="-1"
+        eType="#//RowElement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GreenhouseElement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="RowElement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="GreenhouseActuator" eSuperTypes="#//GreenhouseElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//SettingActuator"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="controller" eType="#//Controller"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="action" upperBound="-1"
+        eType="#//Action" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="safeState" eType="#//SettingAction"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RowActuator" eSuperTypes="#//RowElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//SettingActuator"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="controller" eType="#//Controller"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="action" upperBound="-1"
+        eType="#//Action" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="safeState" eType="#//SettingAction"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GreenhouseSensor" eSuperTypes="#//GreenhouseElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//SettingSensor"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="controller" eType="#//Controller"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Variable"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="states" upperBound="-1"
+        eType="#//State" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RowSensor" eSuperTypes="#//RowElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="type" eType="#//SettingSensor"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="controller" eType="#//Controller"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Variable"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="states" upperBound="-1"
+        eType="#//State" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="State">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variable" eType="#//Variable"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="op" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="threshold" eType="#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Variable">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Action">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="value" eType="#//SettingAction"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="trigger" eType="#//Trigger"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Trigger">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="RowRuleSet" eSuperTypes="#//RowElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="Actuator" eType="#//RowActuator"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="trigger" eType="#//Trigger"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sensor" eType="#//RowSensor"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="state" eType="#//State"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="GreenhouseRuleSet" eSuperTypes="#//GreenhouseElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="actuator" eType="#//GreenhouseActuator"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="trigger" eType="#//Trigger"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sensor" eType="#//GreenhouseSensor"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="state" eType="#//State"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Expression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Plus" eSuperTypes="#//Expression">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Minus" eSuperTypes="#//Expression">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Mult" eSuperTypes="#//Expression">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Div" eSuperTypes="#//Expression">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="left" eType="#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="right" eType="#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="MathNumber" eSuperTypes="#//Expression">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+  </eClassifiers>
+</ecore:EPackage>

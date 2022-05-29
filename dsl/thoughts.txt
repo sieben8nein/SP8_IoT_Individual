@@ -1,0 +1,11 @@
+biotope warm
+plant tomato
+    needs temperature require temperature >= 20 && temperature <= 30
+    needs water require lastWaterDayPast <= 3 || humidity
+
+
+machine statmachine.generated.CookingHoodImpl
+variable power
+event PLUS event MINUS
+state OFF
+    PLUS to ON / 
